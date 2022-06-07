@@ -58,7 +58,7 @@ namespace ScreenOCR
 					double newValue = (((((double)rgbValues[i + j] / 255) - 0.5) * (double)contrast) + 0.5) * 255;
 
 
-					Console.WriteLine((double)rgbValues[i + j] + "  " + newValue);
+					//Console.WriteLine((double)rgbValues[i + j] + "  " + newValue);
 					if (newValue > 255) newValue = 255;
 					if (newValue < 0) newValue = 0;
 					rgbValues[i + j] = (byte)(int)newValue;
