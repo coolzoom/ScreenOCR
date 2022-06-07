@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using Clipboard = System.Windows.Clipboard;
 using Point = System.Windows.Point;
 using System.Text;
+using System.Runtime.InteropServices;
 
 namespace ScreenOCR
 {
@@ -120,5 +121,49 @@ namespace ScreenOCR
 			mask.Show();
 		}
 
-	}
+		/// <summary>
+		/// Helper class containing User32 API functions
+		/// </summary>
+		private class User32
+		{
+			[StructLayout(LayoutKind.Sequential)]
+			public struct RECT
+			{
+				public int left;
+				public int top;
+				public int right;
+				public int bottom;
+			}
+			[DllImport("user32.dll")]
+			public static extern IntPtr GetDesktopWindow();
+			[DllImport("user32.dll")]
+			public static extern IntPtr GetWindowDC(IntPtr hWnd);
+			[DllImport("user32.dll")]
+			public static extern IntPtr ReleaseDC(IntPtr hWnd, IntPtr hDC);
+			[DllImport("user32.dll")]
+			public static extern IntPtr GetWindowRect(IntPtr hWnd, ref RECT rect);
+		}
+
+		private void selectActiveWindow_Click(object sender, RoutedEventArgs e)
+        {
+			Process[] process = Process.GetProcessesByName("devenv");
+
+			IntPtr hdcSrc = User32.GetWindowDC(process[0].Handle);
+			// get the size
+			User32.RECT windowRect = new User32.RECT();
+			User32.GetWindowRect(process[0].Handle, ref windowRect);
+			int width = windowRect.right - windowRect.left;
+			int height = windowRect.bottom - windowRect.top;
+
+			if (height > 10 && width > 10)
+			{
+				using (Bitmap bitmap = ImageProcessor.GetBitmap(windowRect.left, windowRect.top, width, height))
+				{
+					ImageProcessor.SetContrast(bitmap, (int)slider.Value);
+					image.Source = ImageProcessor.ImageSourceFromBitmap(bitmap);
+					DoOCR(bitmap);
+				}
+			}
+		}
+    }
 }
